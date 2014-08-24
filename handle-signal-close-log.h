@@ -18,9 +18,7 @@ namespace csxsig {
 pid_t get_pid_from_proc_self() {
 	char target[32];
 	int pid;
-	/* Read the target of the symbolic link.  */
 	readlink("/proc/self", target, sizeof(target));
-	/* The target is a directory named for the process id.  */
 	sscanf(target, "%d", &pid);
 	return (pid_t)pid;
 }
@@ -40,26 +38,26 @@ static std::string ReadFileAsString(std::string path){
     return str;
 }
 
-void csx_close_file(){
+void csx_close_file(const std::string &path) {
     printf("signal close file \n");
     pid_t mypid = get_pid_from_proc_self();
-    std::string logfile=ReadFileAsString(CSXSIG_LOG_PATH);
     // 2. in proc, get a list of all open files matching the logfile
     // 3. close them!
 }
 
-void csx_open_file(){
+void csx_open_file(const std::string &path){
     printf("signal open file \n");
 }
 
 void csx_signal_handler(int signal){
     static bool fileopen=true;
+    static std::string logfile=ReadFileAsString(CSXSIG_LOG_PATH);
     if (fileopen){
-    	csx_close_file();
+    	csx_close_file(logfile);
 	fileopen=false;
     }
     else { 
-    	csx_open_file();
+    	csx_open_file(logfile);
 	fileopen=true;
     }
 
