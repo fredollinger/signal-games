@@ -15,6 +15,16 @@ namespace csxsig {
 #define CSXSIG_LOG_FILE std::string("logfile")
 #define CSXSIG_LOG_PATH std::string(CSXSIG_LOG_DIR + "/" + CSXSIG_LOG_FILE)
 
+pid_t get_pid_from_proc_self() {
+	char target[32];
+	int pid;
+	/* Read the target of the symbolic link.  */
+	readlink("/proc/self", target, sizeof(target));
+	/* The target is a directory named for the process id.  */
+	sscanf(target, "%d", &pid);
+	return (pid_t)pid;
+}
+
 static std::string ReadFileAsString(std::string path){
     std::string str="";
     FILE *fd;
@@ -30,14 +40,29 @@ static std::string ReadFileAsString(std::string path){
     return str;
 }
 
-void csx_signal_handler(int signal){
-    printf("sig\n");
+void csx_close_file(){
+    printf("signal close file \n");
+    pid_t mypid = get_pid_from_proc_self();
     std::string logfile=ReadFileAsString(CSXSIG_LOG_PATH);
-
-    // now 
-    // 1. find our process name 
     // 2. in proc, get a list of all open files matching the logfile
     // 3. close them!
+}
+
+void csx_open_file(){
+    printf("signal open file \n");
+}
+
+void csx_signal_handler(int signal){
+    static bool fileopen=true;
+    if (fileopen){
+    	csx_close_file();
+	fileopen=false;
+    }
+    else { 
+    	csx_open_file();
+	fileopen=true;
+    }
+
     return;
 }
 
