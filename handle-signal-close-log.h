@@ -1,12 +1,14 @@
 #ifndef HANDLE_SIGNAL_CLOSE_FILE_H
 #define HANDLE_SIGNAL_CLOSE_FILE_H
 
+
 #include <dirent.h>
 #include <fcntl.h>
 #include <iomanip>
 #include <iostream>
 #include <signal.h>
 #include <sstream>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string>
 #include <sys/stat.h>
@@ -71,8 +73,11 @@ void csx_close_file(const std::string &path) {
 	if ((dp = readdir(dirp)) != NULL) {
 	    std::string str = csx_readlink(proc + "/" + std::string(dp->d_name));
 	    std::cout << dp->d_name << "->" << str << std::endl;
-	    if (0 == path.compare(str))
+	    if (0 == path.compare(str)){
 	        std::cout << " match: [" << str << "]" << std::endl;
+            int pid = atoi(dp->d_name);
+            close(pid);
+        }
 	}
 	else{
 	    closedir(dirp);
