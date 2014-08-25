@@ -1,8 +1,12 @@
 #ifndef HANDLE_SIGNAL_CLOSE_FILE_H
 #define HANDLE_SIGNAL_CLOSE_FILE_H
 
+#include <dirent.h>
 #include <fcntl.h>
+#include <iomanip>
+#include <iostream>
 #include <signal.h>
+#include <sstream>
 #include <stdio.h>
 #include <string>
 #include <sys/stat.h>
@@ -15,12 +19,26 @@ namespace csxsig {
 #define CSXSIG_LOG_FILE std::string("logfile")
 #define CSXSIG_LOG_PATH std::string(CSXSIG_LOG_DIR + "/" + CSXSIG_LOG_FILE)
 
+std::string csx_readlink(std::string const &path) {
+	char buff[1024];
+	std::string str="";
+	ssize_t len = ::readlink(path.c_str(), buff, sizeof(buff) - 1);
+	if (len != -1) {
+		buff[len] = '\0';
+		str=std::string(buff);
+	} 
+	else
+	    std::cout << " error reading: [" << path << "]" << std::endl;
+	return str;
+}
+
 pid_t get_pid_from_proc_self() {
 	char target[32];
 	int pid;
 	readlink("/proc/self", target, sizeof(target));
 	sscanf(target, "%d", &pid);
-	return (pid_t)pid;
+	return static_cast<pid_t>(pid);
+	//return (pid_t)pid;
 }
 
 static std::string ReadFileAsString(std::string path){
@@ -39,8 +57,29 @@ static std::string ReadFileAsString(std::string path){
 }
 
 void csx_close_file(const std::string &path) {
-    printf("signal close file \n");
     pid_t mypid = get_pid_from_proc_self();
+    std::ostringstream pidstr;
+    pidstr << mypid;
+    std::string proc="/proc/" + pidstr.str() + "/fd";
+    printf("signal close file [%s] \n", proc.c_str());
+    struct dirent *dp;
+    int errno = 0;
+    DIR *dirp = opendir(proc.c_str());
+
+    while (dirp) {
+        errno = 0;
+	if ((dp = readdir(dirp)) != NULL) {
+	    std::string str = csx_readlink(proc + "/" + std::string(dp->d_name));
+	    std::cout << dp->d_name << str << std::endl;
+	}
+	else{
+	    closedir(dirp);
+	    return;
+	}
+
+    } // END while()
+    closedir(dirp);
+
     // 2. in proc, get a list of all open files matching the logfile
     // 3. close them!
 }

@@ -1,9 +1,11 @@
 TARGET=signal-games
+CXX=g++
+WARN= -Werror -pedantic -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wswitch-default -Wundef -Wno-unused
 
 all: clean $(TARGET)
 
 $(TARGET):
-	g++ -I. -o $(TARGET) $(TARGET).cpp
+	$(CXX) $(WARN) -I. -o $(TARGET) $(TARGET).cpp
 clean:
 	rm -f $(TARGET)
 
