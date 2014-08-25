@@ -1,4 +1,4 @@
-#include <handle-signal-close-log.h>
+#include <handle-stop-logging-signal.h>
 
 using namespace csxsig;
 

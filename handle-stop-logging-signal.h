@@ -17,8 +17,8 @@
 
 namespace csxsig {
 
-#define CSXSIG_LOG_DIR std::string("/tmp/log")
-#define CSXSIG_LOG_FILE std::string("logfile")
+#define CSXSIG_LOG_DIR std::string("/tmp/logs")
+#define CSXSIG_LOG_FILE std::string("logpath")
 #define CSXSIG_LOG_PATH std::string(CSXSIG_LOG_DIR + "/" + CSXSIG_LOG_FILE)
 
 std::string csx_readlink(std::string const &path) {
@@ -48,28 +48,41 @@ static std::string ReadFileAsString(std::string path){
     FILE *fd;
     ssize_t bytes=0;
     char buf[BUFSIZ];
+    struct stat sb;
+
+    if (0 != stat(path.c_str(), &sb)){
+        printf("path does not exist: [%s] \n", path.c_str());
+        return str;
+    }
 
     fd=fopen(CSXSIG_LOG_PATH.c_str(), "r");
     while (fgets(buf, sizeof(buf), fd)) { 
-	str = str + buf;
+	    str = str + buf;
     }
     fclose(fd);
     printf("read file: [%s] from [%s] \n", str.c_str(), path.c_str());
     return str;
 }
 
-void csx_close_file(const std::string &path) {
+void csx_close_file() {
     pid_t mypid = get_pid_from_proc_self();
     std::ostringstream pidstr;
     pidstr << mypid;
     std::string proc="/proc/" + pidstr.str() + "/fd";
-    printf("signal close file [%s] \n", proc.c_str());
     struct dirent *dp;
-    int errno = 0;
+    static std::string path=std::string("/var/volatile") + ReadFileAsString(CSXSIG_LOG_PATH);
+    if (path.size() < 2){
+	    std::cout << __PRETTY_FUNCTION__ << " Path invalid (too short). Bailing: [" << path << "]" << std::endl;
+        return;
+    }
+    path.erase(path.find_last_not_of(" \n\r\t")+1);
+    //printf("signal close file [%s] \n", path.c_str());
+
+    //int errnum = 0;
     DIR *dirp = opendir(proc.c_str());
 
     while (dirp) {
-        errno = 0;
+        //errnum = 0;
 	if ((dp = readdir(dirp)) != NULL) {
 	    std::string str = csx_readlink(proc + "/" + std::string(dp->d_name));
 	    std::cout << dp->d_name << "->" << str << std::endl;
@@ -78,6 +91,8 @@ void csx_close_file(const std::string &path) {
             int pid = atoi(dp->d_name);
             close(pid);
         }
+        else 
+	        std::cout << "[" << str << "]" << " did not match: [" << path << "]" << std::endl;
 	}
 	else{
 	    closedir(dirp);
@@ -99,7 +114,7 @@ void csx_signal_handler(int signal){
     static bool fileopen=true;
     static std::string logfile=ReadFileAsString(CSXSIG_LOG_PATH);
     if (fileopen){
-    	csx_close_file(logfile);
+    	csx_close_file();
 	fileopen=false;
     }
     else { 
@@ -110,10 +125,17 @@ void csx_signal_handler(int signal){
     return;
 }
 
-void handleSignalCloseFile(){
-    signal(SIGUSR2, csx_signal_handler);
-    printf("setup\n");
-}
+void handleSignalCloseFile() {
+    printf("*************************************************************************************************setup\n");
+    struct sigaction sa;
+    sa.sa_handler = csx_signal_handler;
+    sa.sa_flags = 0;
+    sigemptyset(&sa.sa_mask);
+    if (sigaction(SIGUSR2, &sa, NULL) == -1) {
+        perror("**************************************************************************************Dying here!!\n");
+        exit(1);
+    }
+} // END handleSignalCloseFile()
 
 } // namespace csxsig
 
