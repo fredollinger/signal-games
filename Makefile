@@ -14,6 +14,9 @@ start: $(TARGET)
 kill:
 	rm -rf /tmp/log
 	killall -15 $(TARGET)
+
+stop: kill
+
 signal:
 	./send-usr2-signal.sh
 edit:

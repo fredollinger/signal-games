@@ -70,7 +70,8 @@ void csx_close_file() {
     pidstr << mypid;
     std::string proc="/proc/" + pidstr.str() + "/fd";
     struct dirent *dp;
-    static std::string path=std::string("/var/volatile") + ReadFileAsString(CSXSIG_LOG_PATH);
+    //static std::string path=std::string("/var/volatile") + ReadFileAsString(CSXSIG_LOG_PATH);
+    static std::string path=ReadFileAsString(CSXSIG_LOG_PATH);
     if (path.size() < 2){
 	    std::cout << __PRETTY_FUNCTION__ << " Path invalid (too short). Bailing: [" << path << "]" << std::endl;
         return;
