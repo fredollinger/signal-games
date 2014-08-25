@@ -70,7 +70,9 @@ void csx_close_file(const std::string &path) {
         errno = 0;
 	if ((dp = readdir(dirp)) != NULL) {
 	    std::string str = csx_readlink(proc + "/" + std::string(dp->d_name));
-	    std::cout << dp->d_name << str << std::endl;
+	    std::cout << dp->d_name << "->" << str << std::endl;
+	    if (0 == path.compare(str))
+	        std::cout << " match: [" << str << "]" << std::endl;
 	}
 	else{
 	    closedir(dirp);
